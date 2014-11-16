@@ -6,6 +6,9 @@ public class Main {
         
         Parser parser = new Parser("labyrinthe.txt");
         parser.parse();
+        
+        Map map = parser.getMap();
+        System.out.println(map);
     }
     
 }

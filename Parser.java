@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Scanner;
 
 public class Parser {
     
@@ -17,24 +18,66 @@ public class Parser {
         m_map = null;
     }
     
+    public Map getMap() {
+        return m_map;
+    }
+    
     private void readHeader(int[] sizes) throws IOException {
         String data = m_bufferReader.readLine();
-
-        // Regex => text: blancs nombre blancs text blancs nombre.
-        boolean matches = data.matches("(\\w*)(:)(\\s+)(\\d+)(\\s+)(\\w*)(\\s+)(\\d+)");
-        if (!matches)
+        
+        try {
+            // Regex => text: blancs nombre text blanc nombre
+            Scanner in = readInt(data, "\\w*:\\s+\\d+\\s+\\w*\\s+\\d+\\s*");
+            sizes[0] = in.nextInt() * 2 + 1; 
+            sizes[1] = in.nextInt() * 2 + 1; 
+        } catch (IOException e) {
             throw new IOException("Error while reading the header of: " + m_fileName);
+        }
+    }
+    
+    private void readInformations() throws IOException {
+        m_bufferReader.readLine();
+        String data = m_bufferReader.readLine();
+        
+        // Blanc text: blanc nombre
+        try {
+            // Blanc text: blanc nombre
+            m_map.setNumberMonsters(readInt(data, "\\s+\\w*:\\s+\\d+\\s*").nextInt());
+            data = m_bufferReader.readLine();
+            m_map.setNumberCandies(readInt(data, "\\s+\\w*:\\s+\\d+\\s*").nextInt());
+            
+            // Emplacements:
+            data = m_bufferReader.readLine();
+            data = m_bufferReader.readLine();
 
-        String[] tokens = data.split("(\\s+)");
-
-        int i = 0;
-        for (String token : tokens) {
-            // Si le string est un nombre
-            if (token.matches("(\\d+)")) {
-                // les dimensions données sont celles intérieures, si bordures -> * 2 + 1.
-                sizes[i] = Integer.parseInt(token) * 2 + 1; 
-                ++i;
+            // Blanc text: blanc (nombre, nombre) -> Pakkuman
+            Scanner in = readInt(data, "\\s+\\w*:\\s+\\(\\d+,\\d+\\)\\s*");
+            // * 2 + 1 car dimensions intérieures ...
+            m_map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.BEGIN);
+            
+            data = m_bufferReader.readLine();
+            // Blanc text: blanc (nombre, nombre) (nombre, nombre) ... -> Monster
+            String regex = "\\s+\\w*:";
+            for (int i = 0; i < m_map.getNumberOfMonsters(); ++i) {
+                regex += "\\s+\\(\\d+,\\d+\\)";
             }
+            in = readInt(data, regex + "\\s*");
+            for (int i = 0; i < m_map.getNumberOfMonsters(); ++i) {
+                m_map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.MONSTER);                
+            }
+
+            data = m_bufferReader.readLine();
+            // Blanc text: blanc (nombre, nombre) (nombre, nombre) ... -> Bonbons
+            regex = "\\s+\\w*:";
+            for (int i = 0; i < m_map.getNumberOfCandies(); ++i) {
+                regex += "\\s+\\(\\d+,\\d+\\)";
+            }
+            in = readInt(data, regex + "\\s*");
+            for (int i = 0; i < m_map.getNumberOfCandies(); ++i) {
+                m_map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.CANDY);                
+            }
+        } catch (IOException e) {
+            throw new IOException("Error while reading the information:" + data + " Data non conform");
         }
     }
     
@@ -79,10 +122,16 @@ public class Parser {
         }
     }
     
+    public Scanner readInt(String data, String regex) throws IOException {
+        if (!data.matches(regex))
+            throw new IOException();
+        
+        Scanner in = new Scanner(data).useDelimiter("[^0-9]+");
+        return in;
+    }
+    
     public void parse() {
-
         try {
-
             m_bufferReader = new BufferedReader(new FileReader(m_fileName));
             
             int[] sizes = new int[2];
@@ -100,16 +149,18 @@ public class Parser {
             
             try {
                 // On remplit le labyrinthe avec les vides et les murs.
-                // Exception est lancée si ligne du labyrinthe n'est pas "standard".
                 readLabyrinth();
             } catch (IOException e) {
                 System.out.println(e.getMessage());
                 return;
             }
             
-            System.out.println(m_map);
-            System.out.println(m_map.getRealHeight() + " " + m_map.getRealWidth());
-
+            try {
+                // On remplit le labyrinthe avec les informations des positions.
+                readInformations();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
         } catch (FileNotFoundException e) {
             System.out.println("File not found: " + m_fileName);
         } finally {
