@@ -4,10 +4,11 @@ public class Main {
 
     public static void main(String[] args) {
         
-        Parser parser = new Parser("labyrinthe.txt");
-        parser.parse();
+        Map map = new Map();
         
-        Map map = parser.getMap();
+        Parser parser = new Parser("labyrinthe.txt");
+        parser.parse(map);
+        
         System.out.println(map);
     }
     

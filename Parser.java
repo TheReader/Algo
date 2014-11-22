@@ -10,16 +10,10 @@ public class Parser {
     
     private BufferedReader m_bufferReader;
     private final String m_fileName;
-    private Map m_map;
     
     public Parser(String fileName) {
         m_bufferReader = null;
         m_fileName = fileName;
-        m_map = null;
-    }
-    
-    public Map getMap() {
-        return m_map;
     }
     
     private void readHeader(int[] sizes) throws IOException {
@@ -35,16 +29,16 @@ public class Parser {
         }
     }
     
-    private void readInformations() throws IOException {
+    private void readInformations(Map map) throws IOException {
         m_bufferReader.readLine();
         String data = m_bufferReader.readLine();
         
         // Blanc text: blanc nombre
         try {
             // Blanc text: blanc nombre
-            m_map.setNumberMonsters(readInt(data, "\\s+\\w*:\\s+\\d+\\s*").nextInt());
+            map.setNumberMonsters(readInt(data, "\\s+\\w*:\\s+\\d+\\s*").nextInt());
             data = m_bufferReader.readLine();
-            m_map.setNumberCandies(readInt(data, "\\s+\\w*:\\s+\\d+\\s*").nextInt());
+            map.setNumberCandies(readInt(data, "\\s+\\w*:\\s+\\d+\\s*").nextInt());
             
             // Emplacements:
             data = m_bufferReader.readLine();
@@ -53,41 +47,41 @@ public class Parser {
             // Blanc text: blanc (nombre, nombre) -> Pakkuman
             Scanner in = readInt(data, "\\s+\\w*:\\s+\\(\\d+,\\d+\\)\\s*");
             // * 2 + 1 car dimensions intérieures ...
-            m_map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.BEGIN);
+            map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.BEGIN);
             
             data = m_bufferReader.readLine();
             // Blanc text: blanc (nombre, nombre) (nombre, nombre) ... -> Monster
             String regex = "\\s+\\w*:";
-            for (int i = 0; i < m_map.getNumberOfMonsters(); ++i) {
+            for (int i = 0; i < map.getNumberOfMonsters(); ++i) {
                 regex += "\\s+\\(\\d+,\\d+\\)";
             }
             in = readInt(data, regex + "\\s*");
-            for (int i = 0; i < m_map.getNumberOfMonsters(); ++i) {
-                m_map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.MONSTER);                
+            for (int i = 0; i < map.getNumberOfMonsters(); ++i) {
+                map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.MONSTER);                
             }
 
             data = m_bufferReader.readLine();
             // Blanc text: blanc (nombre, nombre) (nombre, nombre) ... -> Bonbons
             regex = "\\s+\\w*:";
-            for (int i = 0; i < m_map.getNumberOfCandies(); ++i) {
+            for (int i = 0; i < map.getNumberOfCandies(); ++i) {
                 regex += "\\s+\\(\\d+,\\d+\\)";
             }
             in = readInt(data, regex + "\\s*");
-            for (int i = 0; i < m_map.getNumberOfCandies(); ++i) {
-                m_map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.CANDY);                
+            for (int i = 0; i < map.getNumberOfCandies(); ++i) {
+                map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.CANDY);                
             }
         } catch (IOException e) {
             throw new IOException("Error while reading the information:" + data + " Data non conform");
         }
     }
     
-    private void readLabyrinth() throws IOException {
+    private void readLabyrinth(Map map) throws IOException {
         String data;
-        for (int x = 0; x < m_map.getHeight(); ++x) {
+        for (int x = 0; x < map.getHeight(); ++x) {
             data = m_bufferReader.readLine();
             
             // "+---" ou "+   " prend une taille de 2 * la largeur + le "+" final.
-            if (data.length() != (m_map.getWidth() * 2 - 1))
+            if (data.length() != (map.getWidth() * 2 - 1))
                 throw new IOException("The labyrinth is not conform");
 
             for (int j = 0, y = 0; j < data.length(); ++j, ++y) {                
@@ -100,17 +94,17 @@ public class Parser {
                     case '+':
                     case '-':
                     case '|':
-                        m_map.set(x, y, MapEnum.WALL);
+                        map.set(x, y, MapEnum.WALL);
                         break;
                     case ' ':
                         // Si la sortie est sur un bord (haut/bas) du labyrinthe. -> "+---+EXIT+---+"
-                        if (x == 0 || x == m_map.getHeight() - 1)
-                            m_map.set(x, y, MapEnum.EXIT);
+                        if (x == 0 || x == map.getHeight() - 1)
+                            map.set(x, y, MapEnum.EXIT);
                         // Si la sortie est sur un bord (gauche/droie) du labyrinthe et sur une rangée impaire. -> "EXIT   |"
                         else if (x % 2 == 1 && (j == 0 || j == data.length() - 1) && data.charAt(j) == ' ')
-                            m_map.set(x, y, MapEnum.EXIT);
+                            map.set(x, y, MapEnum.EXIT);
                         else
-                            m_map.set(x, y, MapEnum.EMPTY);
+                            map.set(x, y, MapEnum.EMPTY);
                         break;
                     default:
                         break;
@@ -130,7 +124,7 @@ public class Parser {
         return in;
     }
     
-    public void parse() {
+    public void parse(Map map) {
         try {
             m_bufferReader = new BufferedReader(new FileReader(m_fileName));
             
@@ -145,11 +139,11 @@ public class Parser {
             }
             
             // Une map est initialisée de taille (hauteur * 2 + 1, largeur * 2 + 1) avec des null.
-            m_map = new Map(sizes[0], sizes[1]);
+            map.setSizes(sizes[0], sizes[1]);
             
             try {
                 // On remplit le labyrinthe avec les vides et les murs.
-                readLabyrinth();
+                readLabyrinth(map);
             } catch (IOException e) {
                 System.out.println(e.getMessage());
                 return;
@@ -157,7 +151,7 @@ public class Parser {
             
             try {
                 // On remplit le labyrinthe avec les informations des positions.
-                readInformations();
+                readInformations(map);
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
