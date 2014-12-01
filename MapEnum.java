@@ -6,5 +6,8 @@ public enum MapEnum {
     EMPTY,
     EXIT,
     MONSTER,
-    WALL
+    WALL_UP,
+    WALL_LEFT,
+    WALL_RIGHT,
+    WALL_DOWN
 }
