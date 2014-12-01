@@ -75,45 +75,43 @@ public class Parser {
     }
     
     private void readLabyrinth(Map map) throws IOException {
-        String data;
-        for (int x = 1; x < map.getHeight(); x+2) {
-            data = m_bufferReader.readLine();
-            
-            // "+---" ou "+   " prend une taille de 2 * la largeur + le "+" final.
-            if (data.length() != (map.getWidth() * 2 - 1))
-                throw new IOException("The labyrinth is not conform");
+	String data;
+	for(int current_line=0;current_line<=map.getHeight()*2;++current_line){
+		data = m_bufferReader.readLine();
 
-            for (int j = 0, y = 0; j < data.length(); ++j, ++y) {                
-                if (j % 2 == 1)
-                    // On vérifie qu'on a bien une suite de "---" ou de "   " entre chaque "+", "|" ou " ".
-                    if (!(data.substring(j, j + 3).equals("---") || data.substring(j, j + 3).equals("   ")))
-                        throw new IOException("The labyrinth is not conform");
-                
-                switch (data.charAt(j)) {
-                    case '+':
-                    case '-':
-                    case '|':
-                        map.set(x, y, MapEnum.WALL);
-                        break;
-                    case ' ':
-                        // Si la sortie est sur un bord (haut/bas) du labyrinthe. -> "+---+EXIT+---+"
-                        if (x == 0 || x == map.getHeight() - 1)
-                            map.set(x, y, MapEnum.EXIT);
-                        // Si la sortie est sur un bord (gauche/droie) du labyrinthe et sur une rangée impaire. -> "EXIT   |"
-                        else if (x % 2 == 1 && (j == 0 || j == data.length() - 1) && data.charAt(j) == ' ')
-                            map.set(x, y, MapEnum.EXIT);
-                        else
-                            map.set(x, y, MapEnum.EMPTY);
-                        break;
-                    default:
-                        break;
-                }
-                // "+---+" On saute du 1 au 3, puis ++j du for -> on se retrouve au "+" (4) qui est pair.
-                if (j % 2 == 1)
-                    j += 2;
-            }
-        }
-    }
+// "+---" ou "+   " prend une taille de 2 * la largeur + le "+" final.
+		if (data.length() != (map.getWidth() * 2 - 1))
+			throw new IOException("The labyrinth is not conform");
+
+		for(int current_col=0, x=2;current_col<map.getWidth();x+4, ++current_col){
+			switch(data.charAt(x)){
+				case '-':
+					if(current_line!=(map.getHeight()*2)-1)
+						map.set(current_line+1, current_col, MapEnum.WALL_UP);
+					if(current_line!=0)
+						map.set(current_line-1, current_col, MapEnum.WALL_DOWN);
+				case ' ':
+					if(current_line%2==1)//si nous sommes dans une case
+						if(current_col==0 && data.charAt(j-2)==' ')//s'il y une ouverture a gauche
+							map.set(current_line, current_col, MapEnum.EXIT);
+						else if(current_col==map.getWidth()-1 && data.charAt(j+2)==' ')//s'il y a une ouverture a droite
+							map.set(current_line, current_col, MapEnum.EXIT);
+						else
+							map.set(current_line, current_col, MapEnum.EMPTY);
+							if(data.charAt(j+2)=='|')
+								map.set(current_line, current_col, MapEnum.WALL_RIGHT)
+							if(data.charAt(j-2)=='|')
+								map.set(current_line, current_col, MapEnum.WALL_LEFT)
+					else//si nous sommes sur un mur
+						if(current_line==0)//si nous sommes au mur supérieur, il y a une ouverture vers le haut
+							map.set(current_line+1, current_col, MapEnum.EXIT)
+						else if(current_line==(map.getHeight()*2)-1)//si nous sommes sur le mur inférieur, il y a une ouverture vers le bas
+							map.set(current_line-1, current_col, MapEnum.EXIT);
+				}
+		}
+	}
+}
+    
     
     public Scanner readInt(String data, String regex) throws IOException {
         if (!data.matches(regex))
