@@ -30,14 +30,6 @@ public final class Map {
         return m_numberMonsters;
     }  
     
-    public int getRealHeight() {
-        return m_height / 2;
-    }
-    
-    public int getRealWidth() {
-        return m_width / 2;
-    }
-    
     public int getWidth() {
         return m_width;
     }
