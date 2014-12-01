@@ -22,8 +22,8 @@ public class Parser {
         try {
             // Regex => text: blancs nombre text blanc nombre
             Scanner in = readInt(data, "\\w*:\\s+\\d+\\s+\\w*\\s+\\d+\\s*");
-            sizes[0] = in.nextInt() * 2 + 1; 
-            sizes[1] = in.nextInt() * 2 + 1; 
+            sizes[0] = in.nextInt(); 
+            sizes[1] = in.nextInt(); 
         } catch (IOException e) {
             throw new IOException("Error while reading the header of: " + m_fileName);
         }
@@ -46,8 +46,7 @@ public class Parser {
 
             // Blanc text: blanc (nombre, nombre) -> Pakkuman
             Scanner in = readInt(data, "\\s+\\w*:\\s+\\(\\d+,\\d+\\)\\s*");
-            // * 2 + 1 car dimensions intérieures ...
-            map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.BEGIN);
+            map.set(in.nextInt(), in.nextInt(), MapEnum.BEGIN);
             
             data = m_bufferReader.readLine();
             // Blanc text: blanc (nombre, nombre) (nombre, nombre) ... -> Monster
@@ -57,7 +56,7 @@ public class Parser {
             }
             in = readInt(data, regex + "\\s*");
             for (int i = 0; i < map.getNumberOfMonsters(); ++i) {
-                map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.MONSTER);                
+                map.set(in.nextInt(), in.nextInt(), MapEnum.MONSTER);                
             }
 
             data = m_bufferReader.readLine();
@@ -68,7 +67,7 @@ public class Parser {
             }
             in = readInt(data, regex + "\\s*");
             for (int i = 0; i < map.getNumberOfCandies(); ++i) {
-                map.set(in.nextInt() * 2 + 1, in.nextInt() * 2 + 1, MapEnum.CANDY);                
+                map.set(in.nextInt(), in.nextInt(), MapEnum.CANDY);                
             }
         } catch (IOException e) {
             throw new IOException("Error while reading the information:" + data + " Data non conform");
@@ -77,7 +76,7 @@ public class Parser {
     
     private void readLabyrinth(Map map) throws IOException {
         String data;
-        for (int x = 0; x < map.getHeight(); ++x) {
+        for (int x = 1; x < map.getHeight(); x+2) {
             data = m_bufferReader.readLine();
             
             // "+---" ou "+   " prend une taille de 2 * la largeur + le "+" final.
